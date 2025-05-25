@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invoice | Sambha Pharmacy</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    .invoice-box {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #007bff;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: left;
+    }
+    .text-right {
+      text-align: right;
+    }
+    .no-print {
+      margin-top: 20px;
+    }
+    .customer-info {
+      margin-top: 15px;
+    }
+    @media print {
+      .no-print { display: none; }
+      body { background: white; }
+      .invoice-box { box-shadow: none; border: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="invoice-box">
+  <h2>🧾 Sambha Pharmacy Invoice</h2>
+
+  <div class="no-print">
+    <label>Customer Name: <input type="text" id="customerName" placeholder="Enter name"></label>
+    <label>Phone: <input type="text" id="customerPhone" placeholder="Enter phone"></label>
+
+    <table id="tempItemsTable">
+      <thead>
+        <tr>
+          <th>Item Name</th>
+          <th>Qty</th>
+          <th>Unit Price (₹)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tempItemsBody">
+        <tr>
+          <td><input type="text" placeholder="Paracetamol" class="itemName"></td>
+          <td><input type="number" min="1" value="1" class="itemQty"></td>
+          <td><input type="number" min="0" value="0" class="itemPrice"></td>
+          <td><button onclick="removeTempItem(this)">❌</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button onclick="addTempRow()">➕ Add More Item</button>
+    <button onclick="addAllItems()">✅ Add All to Invoice</button>
+  </div>
+
+  <div class="customer-info">
+    <p><strong>Customer:</strong> <span id="custNameOutput">-</span> | <strong>Phone:</strong> <span id="custPhoneOutput">-</span></p>
+  </div>
+
+  <table id="invoiceTable">
+    <thead>
+      <tr>
+        <th>Sr</th>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Unit Price (₹)</th>
+        <th>Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody id="invoiceBody"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" class="text-right"><strong>Subtotal</strong></td>
+        <td id="subtotal">0.00</td>
+      </tr>
+      <tr>
+        <td colspan="4" class="text-right"><strong>GST (5%)</strong></td>
+        <td id="gst">0.00</td>
+      </tr>
+      <tr>
+        <td colspan="4" class="text-right"><strong>Grand Total</strong></td>
+        <td id="grandTotal">0.00</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="no-print" style="text-align:center;">
+    <button onclick="window.print()">🖨️ Print Invoice</button>
+  </div>
+</div>
+
+<script>
+  let invoiceData = [];
+
+  function addTempRow() {
+    const row = `
+      <tr>
+        <td><input type="text" class="itemName" placeholder="Medicine name"></td>
+        <td><input type="number" class="itemQty" min="1" value="1"></td>
+        <td><input type="number" class="itemPrice" min="0" value="0"></td>
+        <td><button onclick="removeTempItem(this)">❌</button></td>
+      </tr>
+    `;
+    document.getElementById("tempItemsBody").insertAdjacentHTML("beforeend", row);
+  }
+
+  function removeTempItem(button) {
+    const row = button.closest("tr");
+    row.remove();
+  }
+
+  function addAllItems() {
+    const rows = document.querySelectorAll("#tempItemsBody tr");
+    const custName = document.getElementById("customerName").value;
+    const custPhone = document.getElementById("customerPhone").value;
+
+    rows.forEach(row => {
+      const name = row.querySelector(".itemName").value;
+      const qty = parseFloat(row.querySelector(".itemQty").value);
+      const price = parseFloat(row.querySelector(".itemPrice").value);
+      if (name && qty > 0 && price >= 0) {
+        invoiceData.push({ name, qty, price });
+      }
+    });
+
+    document.getElementById("custNameOutput").textContent = custName || "-";
+    document.getElementById("custPhoneOutput").textContent = custPhone || "-";
+
+    document.getElementById("tempItemsBody").innerHTML = "";
+    addTempRow();
+    updateTable();
+  }
+
+  function updateTable() {
+    const tbody = document.getElementById("invoiceBody");
+    tbody.innerHTML = "";
+
+    let subtotal = 0;
+
+    invoiceData.forEach((item, index) => {
+      const total = item.qty * item.price;
+      subtotal += total;
+
+      const row = `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${item.price.toFixed(2)}</td>
+          <td>${total.toFixed(2)}</td>
+        </tr>
+      `;
+      tbody.insertAdjacentHTML("beforeend", row);
+    });
+
+    const gst = subtotal * 0.05;
+    const grandTotal = subtotal + gst;
+
+    document.getElementById("subtotal").textContent = subtotal.toFixed(2);
+    document.getElementById("gst").textContent = gst.toFixed(2);
+    document.getElementById("grandTotal").textContent = grandTotal.toFixed(2);
+  }
+
+  // Initial row
+  window.onload = () => addTempRow();
+</script>
+
+</body>
+</html>
