@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dynamic Invoice - Sambha Pharmacy</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    .invoice-box { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ccc; }
+    .text-right { text-align: right; }
+    .no-print { margin-top: 20px; text-align: center; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="invoice-box">
+  <h2>Sambha Pharmacy Shop</h2>
+
+  <div class="no-print">
+    <label>Customer Name: <input type="text" id="customerName"></label><br>
+    <label>Phone: <input type="text" id="customerPhone"></label><br>
+    <label>Item Name: <input type="text" id="itemName"></label>
+    <label>Quantity: <input type="number" id="quantity" min="1" value="1"></label>
+    <label>Unit Price (₹): <input type="number" id="price" min="0" value="0"></label>
+    <button onclick="addItem()">Add Item</button>
+  </div>
+
+  <p><strong>Customer:</strong> <span id="custNameOutput">-</span> | <strong>Phone:</strong> <span id="custPhoneOutput">-</span></p>
+
+  <table id="invoiceTable">
+    <thead>
+      <tr>
+        <th>Sr</th>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Unit Price (₹)</th>
+        <th>Total (₹)</th>
+      </tr>
+    </thead>
+    <tbody id="invoiceBody"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" class="text-right"><strong>Subtotal</strong></td>
+        <td id="subtotal">0.00</td>
+      </tr>
+      <tr>
+        <td colspan="4" class="text-right"><strong>GST (5%)</strong></td>
+        <td id="gst">0.00</td>
+      </tr>
+      <tr>
+        <td colspan="4" class="text-right"><strong>Grand Total</strong></td>
+        <td id="grandTotal">0.00</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Print Invoice</button>
+  </div>
+</div>
+
+<script>
+  let invoiceData = [];
+  function addItem() {
+    const name = document.getElementById("itemName").value;
+    const qty = parseFloat(document.getElementById("quantity").value);
+    const price = parseFloat(document.getElementById("price").value);
+    const custName = document.getElementById("customerName").value;
+    const custPhone = document.getElementById("customerPhone").value;
+
+    if (!name || qty <= 0 || price <= 0) {
+      alert("Please enter valid item details.");
+      return;
+    }
+
+    invoiceData.push({ name, qty, price });
+
+    document.getElementById("custNameOutput").textContent = custName || "-";
+    document.getElementById("custPhoneOutput").textContent = custPhone || "-";
+
+    updateTable();
+
+    document.getElementById("itemName").value = "";
+    document.getElementById("quantity").value = 1;
+    document.getElementById("price").value = 0;
+  }
+
+  function updateTable() {
+    const tbody = document.getElementById("invoiceBody");
+    tbody.innerHTML = "";
+
+    let subtotal = 0;
+
+    invoiceData.forEach((item, index) => {
+      const total = item.qty * item.price;
+      subtotal += total;
+
+      const row = `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${item.price.toFixed(2)}</td>
+          <td>${total.toFixed(2)}</td>
+        </tr>
+      `;
+      tbody.insertAdjacentHTML("beforeend", row);
+    });
+
+    const gst = subtotal * 0.05;
+    const grandTotal = subtotal + gst;
+
+    document.getElementById("subtotal").textContent = subtotal.toFixed(2);
+    document.getElementById("gst").textContent = gst.toFixed(2);
+    document.getElementById("grandTotal").textContent = grandTotal.toFixed(2);
+  }
+</script>
+
+</body>
+</html>
